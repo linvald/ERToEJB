@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<reaspec project="SilkVendor" xmlns="REAML1.1.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="REAML2.0.xsd REAML2.0.xsd">
+	<resource name="Silk" kind="measuable" unit="meters"/>
+	<resource name="CashAtHand" kind="cash" unit="kr"/>
+	<agent name="Manager">
+		<custody resource="Silk"/>
+		<custody resource="CashAtHand"/>
+	</agent>
+	<agent name="Investor">
+		<attribute name="Address" type="string"/>
+		<attribute name="Phone" type="string"/>
+	</agent>
+	<agent name="SilkVendor"/>
+	<agent name="Customer"/>
+	<event name="ObtainSilk">
+		<inflow resource="Silk" kind="take"/>
+	</event>
+	<event name="CashDispersement">
+		<attribute name="comment" type="string"/>
+		<outflow resource="CashAtHand" kind="give"/>
+	</event>
+	<event name="SellSilk">
+		<outflow resource="Silk" kind="give"/>
+	</event>
+	<event name="CashReceive">
+		<inflow resource="CashAtHand" kind="take"/>
+	</event>
+	<transfer name="SilkOrderTransfer">
+		<inflow event="ObtainSilk" provider="SilkVendor" receiver="Manager"/>
+		<outflow event="CashDispersement" provider="Manager" receiver="SilkVendor"/>
+	</transfer>
+	<transfer name="CustomerOrderTransfer">
+		<attribute name="priority" type="integer"/>
+		<inflow event="CashReceive" provider="Customer" receiver="Manager"/>
+		<outflow event="SellSilk" provider="Manager" receiver="Customer"/>
+	</transfer>
+	
+	<typeimage name="CustomerSizes" for="Customer" kind="policy">
+		<attribute name="size" type="string"/>
+	</typeimage>
+	
+</reaspec>

@@ -1,0 +1,47 @@
+Mon Feb 16 11:24:19 CET 2004  [debug] AvalonLogSystem initialized using logfile 'velocity.log'
+Mon Feb 16 11:24:19 CET 2004   [info] ************************************************************** 
+Mon Feb 16 11:24:19 CET 2004   [info] Starting Jakarta Velocity v1.3.1-rc2
+Mon Feb 16 11:24:19 CET 2004   [info] RuntimeInstance initializing.
+Mon Feb 16 11:24:19 CET 2004   [info] Default Properties File: org\apache\velocity\runtime\defaults\velocity.properties
+Mon Feb 16 11:24:19 CET 2004   [info] Trying to use logger class org.apache.velocity.runtime.log.AvalonLogSystem
+Mon Feb 16 11:24:19 CET 2004   [info] Using logger class org.apache.velocity.runtime.log.AvalonLogSystem
+Mon Feb 16 11:24:19 CET 2004   [info] Default ResourceManager initializing. (class org.apache.velocity.runtime.resource.ResourceManagerImpl)
+Mon Feb 16 11:24:19 CET 2004   [info] Resource Loader Instantiated: org.apache.velocity.runtime.resource.loader.FileResourceLoader
+Mon Feb 16 11:24:19 CET 2004   [info] FileResourceLoader : initialization starting.
+Mon Feb 16 11:24:19 CET 2004   [info] FileResourceLoader : adding path 'resources'
+Mon Feb 16 11:24:19 CET 2004   [info] FileResourceLoader : adding path 'resources/templates'
+Mon Feb 16 11:24:19 CET 2004   [info] FileResourceLoader : initialization complete.
+Mon Feb 16 11:24:19 CET 2004   [info] ResourceCache : initialized. (class org.apache.velocity.runtime.resource.ResourceCacheImpl)
+Mon Feb 16 11:24:19 CET 2004   [info] Default ResourceManager initialization complete.
+Mon Feb 16 11:24:19 CET 2004   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Literal
+Mon Feb 16 11:24:19 CET 2004   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Macro
+Mon Feb 16 11:24:19 CET 2004   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Parse
+Mon Feb 16 11:24:19 CET 2004   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Include
+Mon Feb 16 11:24:19 CET 2004   [info] Loaded System Directive: org.apache.velocity.runtime.directive.Foreach
+Mon Feb 16 11:24:19 CET 2004   [info] Created: 20 parsers.
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : initialization starting.
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : adding VMs from VM library template : ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makePackageAndImports( ejbmodel ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeClassLevelMarkup( EJB ejbmodel ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeCommon( className ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeCMP( fields ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeCallBackMethods( className ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeEjbCreate( resourceName fields ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeEjbPostCreate( resourceName fields ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeRelations( relations ejbmodel ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeRelationToEvent( relatedTo agentOrResource inflowOutflow ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeDualRelation( dualName eventName ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeForeignRelations( relations ejbmodel ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : added new VM : #makeKeyField( className ) : source = ejbMacros.vm
+Mon Feb 16 11:24:19 CET 2004   [info] ResourceManager : found ejbMacros.vm with loader org.apache.velocity.runtime.resource.loader.FileResourceLoader
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro :  VM library template macro registration complete.
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : allowInline = true : VMs can be defined inline in templates
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : allowInlineToOverride = false : VMs defined inline may NOT replace previous VM definitions
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : allowInlineLocal = false : VMs defined inline will be  global in scope if allowed.
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : messages on  : VM system will output logging messages
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : autoload off  : VM system will not automatically reload global library macros
+Mon Feb 16 11:24:19 CET 2004   [info] Velocimacro : initialization complete.
+Mon Feb 16 11:24:19 CET 2004   [info] Velocity successfully started.
+Mon Feb 16 11:24:19 CET 2004   [info] ResourceManager : found ejb.vm with loader org.apache.velocity.runtime.resource.loader.FileResourceLoader
+Mon Feb 16 11:24:19 CET 2004   [info] ResourceManager : found Counter.vm with loader org.apache.velocity.runtime.resource.loader.FileResourceLoader
+Mon Feb 16 11:24:19 CET 2004   [info] ResourceManager : found UIDGenerator.vm with loader org.apache.velocity.runtime.resource.loader.FileResourceLoader

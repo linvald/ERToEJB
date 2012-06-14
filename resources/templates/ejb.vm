@@ -1,0 +1,30 @@
+
+#set( $allEJBs = $ejbmodel.get_ejbs())
+#set( $packageName = $ejbmodel.get_modelName())
+
+
+#foreach($ejb in $allEJBs)
+	#set($ejbName = $ejb.get_ejbName())
+	#if(${ejbName})
+		$writer.changeOutput("${ejbName}EJB.java")
+		
+		#set( $fields = $ejb.get_fields())
+		#set( $relations = $ejb.get_relations())
+		#set( $foreignrelations = $ejb.get_foreignRelations())
+		
+#makePackageAndImports( $ejbmodel )
+
+#makeClassLevelMarkup($ejb $ejbmodel)
+public abstract class ${ejbName}EJB implements javax.ejb.EntityBean{	
+	#makeCommon(${ejbName})	
+	#makeCMP($fields)
+	#makeKeyField(${ejbName})
+	#makeRelations($relations $ejbmodel)
+	#makeRelations($foreignrelations $ejbmodel)
+	#makeEjbCreate(${ejbName} $fields)
+	#makeEjbPostCreate(${ejbName} $fields)			
+	#makeCallBackMethods(${ejbName})
+		
+	#end
+}	
+#end

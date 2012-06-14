@@ -1,0 +1,689 @@
+
+##***********************************************************
+##		M A C R O S
+##***********************************************************
+
+#macro(makePackageAndImports $ejbmodel)
+#set( $path = $ejbmodel.get_basePackagePath())
+#set( $modelName = $ejbmodel.get_modelName())
+package ${path}.${modelName};
+
+import javax.ejb.*;
+import ${path}.${modelName}.UIDGeneratorUtil;
+import javax.jms.*;
+import javax.naming.InitialContext;
+import java.sql.Timestamp;
+
+#end
+
+
+#macro( makeClassLevelMarkup $EJB $ejbmodel)
+#set( $className = $EJB.get_ejbName())
+#set( $modelName = $ejbmodel.get_modelName())
+#set( $smallBeginning = $stringhelper.getSmallFirstLetter($className))
+#set( $jndi = $EJB.get_jndiName())
+
+/**
+ * This is the ${className} entity bean
+ *
+ * @see ${className}
+ * @author linvald@itu.dk
+ *
+ * @ejb.bean
+ *    cmp-version="2.x"
+ *    jndi-name="${jndi}"
+ *    local-jndi-name="${className}Local"
+ *    name="${className}"
+ *    type="CMP"
+ *    view-type="local"
+ *    primkey-field="$stringhelper.getSmallFirstLetter(${className})UId"
+ *
+ * @ejb.ejb-ref
+ *    ejb-name="UIDGenerator"
+ *    view-type="local"
+ * 	  ref-name="ejb/UIDGeneratorLocal"
+ *
+ * @ejb.data-object
+ *
+ * @ejb.value-object
+ *    name="${className}"
+ *    match="*"
+ *
+ * @ejb.facade
+ *
+ * @ejb.remote-facade
+ *
+ * @ejb.finder
+ *    method-intf="LocalHome"
+ *    query="SELECT OBJECT(o) FROM ${className} o"
+ *    result-type-mapping="Local"
+ *    signature="java.util.Collection findAll()"
+ *
+ #foreach($entity in $REA.get_Simpleattributes()) #set ($fieldName = $entity.get_key() )
+ * @ejb.finder
+ *    method-intf="LocalHome"
+ *    query="SELECT OBJECT(o) FROM ${className} AS o WHERE o.$fieldName=?1"
+ *    result-type-mapping="Local"
+ *    signature="java.util.Collection find${className}By${fieldName}(java.lang.String ${fieldName})"
+ #end
+ *
+ * @ejb.persistence table-name="${className}"
+ * 
+ * @jboss.peristence
+ * 	  create-table="true"
+ * 	  remove-table="false"
+ * 	  read-only "false"
+ *     tuned-updates="true"
+ *
+ * @ejb.util
+ *    generate="physical"
+ * 
+ */
+#end
+
+
+#macro(makeCommon $className )
+
+/****************************************************
+			C O M M O N   F I E L D S
+*****************************************************/
+private EntityContext entityContext;
+public static final String COUNTER_NAME = "${className}";
+public TopicPublisher publisher;
+public TopicConnection topicCon;
+public TopicSession session;
+
+
+	   /**
+	    * This method is needed for remote facade to compile correctly
+    	* @ejb.interface-method
+    	*    view-type="local"
+    	*
+    	* @ejb.facade-method 
+    	*/
+		public abstract ${className}Value get${className}Value();
+	   /** 
+	    * @ejb.interface-method 
+	    * 	view-type="local"
+		*	invalidate="true"
+	    */
+	public abstract void set${className}Value(${className}Value data);
+
+
+	/**
+	 *A method that fires everytime a bean is created
+	 */
+	public void fireStateChanged( int messageType ) throws InterruptedException{	
+			try {
+				MapMessage msg = session.createMapMessage();
+				msg.setString("clazz", "${className}");
+				msg.setInt("id", get${className}UId().intValue()); //key val - client can lookup on keys
+				msg.setInt("messagetype",messageType);
+				//TextMessage msg = session.createTextMessage(get${className}UId().toString());//may need classname and parse the string
+				//msg.setText(msg.toString());	
+				publisher.publish(msg);
+				System.out.println("Sent stateChanged message ${className}...");
+			} catch (JMSException e) {
+				e.printStackTrace();
+			}		
+	}
+
+  /**
+   * Retrieve the creation date.
+   * @return Returns the creation date of this entry.
+   * @ejb.persistent-field
+   * @ejb.interface-method view-type="local";
+   * @jboss.column-name="CREATION_DATE"
+   * @jboss.jdbc-type="TIMESTAMP"
+   * @jboss.sql-type="DATE"
+   * @ejb.facade-method 
+   */
+   public abstract Timestamp getCreationDate();
+   
+  /**
+   * Set the creation date.
+   * @param creationDate The new creation date.
+   * @ejb.interface-method view-type="local";
+   */
+   public abstract void setCreationDate ( Timestamp creationDate );
+	
+   /**
+	* Returns last modified date
+	* 
+	* @return date
+	* @ejb.persistent-field 
+	* @ejb.persistence
+	*    column-name="lastmodified"
+	* @ejb.interface-method
+	*    view-type="local"
+	*
+	* @ejb.facade-method 
+	*
+	* @jboss.cmp.field
+	*	field-name="lastmodified"
+	*	column-name="lastmodified"
+	*/
+	public abstract Timestamp getLastModified(); 
+   /** 
+    * @ejb.interface-method 
+    * 	view-type="local"
+	* @ejb.facade-method
+	*	invalidate="true" 
+    */
+	public abstract void setLastModified(Timestamp modified);
+
+  /**
+	* Returns name
+	* 
+	* @return name
+	* @ejb.persistent-field 
+	* @ejb.persistence
+	*    column-name="name"
+	* @ejb.interface-method
+	*    view-type="local"
+	*
+	* @ejb.facade-method 
+	*
+	* @jboss.cmp.field
+	*	field-name="name"
+	*	column-name="name"
+	*/
+	public abstract java.lang.String getName(); 
+   /** 
+    * @ejb.interface-method 
+    * 	view-type="local"
+	* @ejb.facade-method
+	*	invalidate="true" 
+    */
+	public abstract void setName(java.lang.String name);	
+		
+/****************************************************
+			E N D  C O M M O N   F I E L D S
+*****************************************************/
+#end
+
+
+#macro(makeCMP $fields)	
+
+/****************************************************
+			C M P  F I E L D S
+*****************************************************/
+
+
+	#foreach($field in $fields )
+		#set ($fieldName = $field.get_key() )
+		#set ($capital = $stringhelper.getCapitlizedFirstLetter($fieldName))
+	   /**
+    	* Returns $fieldName
+    	* 
+    	* @return $fieldName
+    	* @ejb.persistent-field 
+    	* @ejb.persistence
+    	*    column-name="$fieldName"
+    	* @ejb.interface-method
+    	*    view-type="local"
+    	*
+    	* @ejb.facade-method 
+    	*
+    	* @jboss.cmp.field
+    	*	field-name="$fieldName"
+    	*	column-name="$fieldName"
+    	*/
+		public abstract $field.get_value() get${capital}(); 
+	   /** 
+	    * @ejb.interface-method 
+	    * 	view-type="local"
+		* @ejb.facade-method
+		*	invalidate="true" 
+	    */
+		public abstract void set${capital}($field.get_value() $fieldName);
+	#end
+	
+	
+/****************************************************
+			E N D  C M P  F I E L D S
+*****************************************************/
+#end  
+
+#macro( makeCallBackMethods $className)
+
+/****************************************************
+			C A L L B A C K M E T H O D S
+*****************************************************/
+	public void setEntityContext(EntityContext entityContext){
+		this.entityContext = entityContext;
+	}
+	public EntityContext getEntityContext(){
+		return this.entityContext;
+	}
+	public void unsetEntityContext() {
+		this.entityContext = null;
+	}
+	public void ejbActivate(){  }
+	public void ejbPassivate(){ }
+	public void ejbLoad(){  }
+	public void ejbStore(){  
+		/*try{
+			fireStateChanged(dk.itu.next.rea.statics.events.MessageTypes.UPDATE);
+		}
+		catch(java.lang.InterruptedException e){
+        	System.out.println("Faild in ejbStore()-->fireStateChanged()");
+        }*/	
+	}	
+	public void ejbRemove() throws RemoveException{  }
+	
+/****************************************************
+			E N D  C A L L B A C K M E T H O D S
+*****************************************************/
+#end
+
+#macro( makeEjbCreate $resourceName $fields )
+ /**
+  * @ejb:create-method
+  */
+  public Integer ejbCreate(
+	#set($count = 0)
+	#foreach($field in $fields )
+		#set($count = $count + 1 )
+		#set($size = $fields.size())
+		#set($type = $field.get_value())
+		#set($fieldName = $field.get_key() )							
+		##if last entry we need no comma!
+		#if($count!=$size) $type $fieldName,
+			#else $type $fieldName
+		#end				
+	#end							
+) throws CreateException {
+	#foreach($field in $fields )
+		#set($type = $field.get_value())
+		#set($fieldName = $field.get_key() )	
+		set$stringhelper.getCapitlizedFirstLetter($fieldName)($fieldName);
+	#end
+	setCreationDate(new java.sql.Timestamp(System.currentTimeMillis()));
+	System.out.println("ejbCreate() - $resourceName ");
+	int uid = 0;
+		try{
+			uid = UIDGeneratorUtil.getLocalHome().create().getUniqueId(COUNTER_NAME);
+		}catch( Exception e ){
+			throw new EJBException( e );
+		}
+        set${resourceName}UId( new Integer( uid ) ); 
+	return null;
+}
+	
+#end
+
+#macro( makeEjbPostCreate $resourceName $fields)
+public void ejbPostCreate(
+	#set($count = 0)
+	#foreach($field in $fields )
+		#set($fieldName = $field.get_key() )
+		#set($type = $field.get_value())
+		#set( $count = $count + 1 )
+		#set($size = $fields.size())
+							
+		##if last entry we need no comma!
+		#if($count!=$size) $type $fieldName,
+			#else $type $fieldName
+		#end				
+	#end							
+) throws CreateException {
+	#foreach($field in $fields )
+		#set($type = $field.get_value())
+		#set($fieldName = $field.get_key() )	
+		set$stringhelper.getCapitlizedFirstLetter($fieldName)($fieldName);
+	#end	
+	setCreationDate(new java.sql.Timestamp(System.currentTimeMillis()));			
+}	
+#end
+
+## Relation from a to b
+#macro( makeRelations $relations $ejbmodel)
+	
+#foreach($relation in $relations)
+	#set( $relationTarget = $relation.get_relatedTo() )
+	#set( $relationSource = $relation.get_relationFrom() )
+	#set( $bidirectional = $relation.is_birdirectional() )
+	#set( $sourceIsMany = $relation.is_relationFromIsMany() )
+	#set( $targetIsMany = $relation.is_relationToIsMany() )
+	#set( $signature = $relation.get_relationSignature() )
+	#set( $modelName = $ejbmodel.get_modelName())
+	#set( $path = $ejbmodel.get_basePackagePath())
+
+/****************************************************
+			R E L A T I O N  F I E L D S
+*****************************************************/
+		//Source=$relationSource SourceIsMany=$sourceIsMany 
+		//Target=$relationTarget TargetIsMany=$targetIsMany
+		//Bidir=$bidirectional Signature=$signature	
+
+##if ($bidirectional)
+   /**
+    *
+    * @ejb.interface-method view-type="local"
+ ##   * @ejb.transaction      type="Required"
+    * @ejb.relation
+   	*   name="$signature" 
+   	*   role-name="${relationSource}-${relationTarget}"
+   	##one2Many
+#if (!$sourceIsMany && $targetIsMany) 
+#if (!$bidirectional)
+   	*	target-ejb="${relationTarget}"
+    *   target-role-name="${relationTarget}-belongs-to-${relationSource}"
+#end 
+    *
+##set($foreignKeyColumn = "${str.toDatabaseAttributeName(${adata.source.roleName}, $sep)}$suffix")
+##set($foreignKeyAtt = $transform.getPrimaryKeyAttribute($sourcetype))
+    * @jboss.target-relation  related-pk-field="$stringhelper.getSmallFirstLetter(${relationSource})UId"
+    *                                fk-column="${relationSource}_fk"
+    */
+    public abstract java.util.Collection get$relationTarget();
+   /**
+    * @ejb.interface-method view-type="local"
+    ##* @ejb.transaction      type="Required"
+    */
+    public abstract void set$relationTarget(java.util.Collection $relationTarget);	 
+#end
+	##many2Many
+#if ($sourceIsMany && $targetIsMany)
+#if (!$bidirectional)
+    *   target-multiple="yes"
+   	*	target-ejb="${relationTarget}"
+    *   target-role-name="${relationTarget}-belongs-to-${relationSource}"
+#end
+    *
+##set($foreignKeyColumn = "${str.toDatabaseAttributeName(${adata.target.roleName}, $sep)}$suffix")
+##set ($foreignKeyAtt = $transform.getPrimaryKeyAttribute($targettype))
+    * @jboss.relation  related-pk-field="$stringhelper.getSmallFirstLetter(${relationTarget})UId"
+    *                  fk-column="${relationTarget}_fk"
+#if (!$bidirectional)
+    *
+##set($foreignKeyColumn = "${str.toDatabaseAttributeName(${adata.source.roleName}, $sep)}$suffix")
+##set ($foreignKeyAtt = $transform.getPrimaryKeyAttribute($sourcetype))
+    * @jboss.target-relation  related-pk-field="$stringhelper.getSmallFirstLetter(${relationSource})UId"
+    *                                fk-column="${relationSource}_fk"
+#end
+    */
+      public abstract java.util.Collection get$relationTarget();
+   /**
+    * @ejb.interface-method view-type="local"
+    * @ejb.transaction      type="Required"
+    */
+    public abstract void set$relationTarget(java.util.Collection $relationTarget);	
+#end
+	##one2one or many2one
+#if ((!$targetIsMany && !$sourceIsMany) || ($sourceIsMany && !$targetIsMany))
+#if (!$bidirectional)
+	##many2one
+#if ($targetIsMany && !$sourceIsMany)
+    *    target-multiple="yes"
+#end
+    *    target-ejb="$relationTarget"
+    *    target-role-name="${relationTarget}-belongs-to-${relationSource}"
+#end
+    *
+##set($foreignKeyColumn = "${str.toDatabaseAttributeName(${adata.target.roleName}, $sep)}$suffix")
+##set($foreignKeyAtt = $transform.getPrimaryKeyAttribute($targettype))
+    * @jboss.relation  related-pk-field="$stringhelper.getSmallFirstLetter(${relationTarget})UId"
+    *                  fk-column="${relationTarget}_fk"
+    */
+    public abstract ${relationTarget}Local get$relationTarget();
+   /**
+    * @ejb.interface-method view-type="local"
+    */
+ 	public abstract void set$relationTarget(${relationTarget}Local $relationTarget);
+#end
+/****************************************************
+			E N D   R E L A T I O N  F I E L D S
+*****************************************************/
+
+#end
+#end
+
+##end
+  
+  
+## Relation between inflow/outflow Resource or internal/external agent and Event
+#macro( makeRelationToEvent $relatedTo $agentOrResource $inflowOutflow)
+	   /** 
+  	    * Relation from Resource/Agent to Event
+	    * @ejb.interface-method 
+	    * 	view-type="local"
+		* @ejb.facade-method 
+		*	invalidate="true"
+	    */
+public abstract void set$relatedTo(java.util.Collection $relatedTo);
+
+		/**
+		 * @ejb.interface-method
+    	 *    view-type="local"
+		 *
+		 * @ejb.facade-method     
+		 *
+   		 * @ejb.value-object
+     	 *   aggregate="dk.itu.next.rea.transform.velocity.model.$model.get_name().${relatedTo}Value"
+     	 *   aggregate-name="${relatedTo}"
+     	 *   members="dk.itu.next.rea.transform.velocity.model.$model.get_name().${relatedTo}Local"
+     	 *   members-name="${relatedTo}"
+     	 *   relation="external"
+     	 *   type="Collection"
+     	 *
+   	 	 * @ejb.relation
+   		 *   name="${relatedTo}-${inflowOutflow}${agentOrResource}" 
+   		 *   role-name="${agentOrResource}-has-a-$relatedTo"
+   		 *		 target-ejb="$relatedTo"
+   		 * @jboss.relation-table
+		 * table-name="${relatedTo}_${inflowOutflow}${agentOrResource}"
+   		 *
+   		 * @jboss.relation-mapping style="relation-table"
+   		 * @jboss.relation
+     	 *   fk-column="${relatedTo}_fkey"
+         * 	 related-pk-field="$stringhelper.getSmallFirstLetter(${relatedTo})UId"
+   		 */	
+public abstract java.util.Collection get$relatedTo();
+
+/**
+ * This method target the corresponding generated CMP class and deal with value objects (relations)
+ * @ejb.interface-method 
+ * 	view-type="local"
+ */
+public abstract void add${relatedTo}(dk.itu.next.rea.transform.velocity.model.$model.get_name().${relatedTo}Value added)throws javax.ejb.FinderException;
+/**
+ * This method target the corresponding generated CMP class and deal with value objects (relations)
+ * @ejb.interface-method 
+ * 	view-type="local"
+ */
+public abstract void remove${relatedTo}(dk.itu.next.rea.transform.velocity.model.$model.get_name().${relatedTo}Value removed)throws javax.ejb.RemoveException;
+
+
+
+#end
+
+## Relation between Events
+#macro( makeDualRelation $dualName $eventName)
+	   /** 
+	    * @ejb.interface-method 
+	    * 	view-type="local"
+		* @ejb.facade-method
+		*	invalidate="true" 
+	    */
+public abstract void set$dualName(java.util.Collection dual);
+
+		/**
+		 * This is one side in a duality relationship
+		 * @ejb.interface-method
+    	 *    view-type="local"
+    	 * @ejb.facade-method 
+    	 *
+    	 * @ejb.value-object
+     	 *   aggregate="dk.itu.next.rea.transform.velocity.model.$model.get_name().${dualName}Value"
+     	 *   aggregate-name="${dualName}"
+     	 *   members="dk.itu.next.rea.transform.velocity.model.$model.get_name().${dualName}Local"
+     	 *   members-name="${dualName}"
+     	 *   relation="external"
+     	 *   type="Collection"
+    	 *
+   	 	 * @ejb.relation
+##find which is lexically smaller for similar name in corresponding relation:name attribute
+#set($smallest = $stringhelper.compareTo($dualName, $eventName))
+#if($smallest == 0 || $smallest < 0)
+		 *  name="${dualName}_${eventName}"
+#else
+		 *  name="${eventName}_${dualName}"
+#end
+   		 *  role-name="${eventName}-dual-to-$dualName"
+   		 *	  target-ejb="$dualName"
+   		 *
+   		 * @jboss.relation-table
+#if($smallest == 0 || $smallest < 0)
+		 *  table-name="${dualName}_${eventName}"
+#else
+		 *  table-name="${eventName}_${dualName}"
+#end
+   		 *  		 
+		 * @jboss.relation-mapping style="relation-table"
+		 *
+		 * @jboss.relation
+     	 *   fk-column="${eventName}_fk"
+         * 	 related-pk-field="$stringhelper.getSmallFirstLetter(${dualName})UId"
+   		 */	
+public abstract java.util.Collection get$dualName();
+
+/**
+ * This method target the corresponding generated CMP class and deal with value objects (relations)
+ * @ejb.interface-method 
+ * 	view-type="local"
+ */
+public abstract void add${dualName}(dk.itu.next.rea.transform.velocity.model.$model.get_name().${dualName}Value added)throws javax.ejb.FinderException;
+
+/**
+ * This method target the corresponding generated CMP class and deal with value objects (relations)
+ * @ejb.interface-method 
+ * 	view-type="local"
+ */
+public abstract void remove${dualName}(dk.itu.next.rea.transform.velocity.model.$model.get_name().${dualName}Value added)throws javax.ejb.RemoveException;
+
+
+#end
+
+#macro( makeForeignRelations $relations $ejbmodel)
+/****************************************************
+			F O R E I G N  R E L A T I O N  F I E L D S
+*****************************************************/
+
+#set( $path = $ejbmodel.get_basePackagePath())
+#set( $modelName = $ejbmodel.get_modelName())
+
+#foreach($relation in $relations)
+
+	#set( $relationTarget = $relation.get_relatedTo() )
+	#set( $relationSource = $relation.get_relationFrom() )
+	#set( $bidirectional = $relation.is_birdirectional() )
+	#set( $sourceIsMany = $relation.is_relationFromIsMany() )
+	#set( $targetIsMany = $relation.is_relationToIsMany() )
+	#set( $signature = $relation.get_relationSignature() )
+	#set( $modelName = $ejbmodel.get_modelName())
+	#set( $path = $ejbmodel.get_basePackagePath())
+
+  	   /** 
+  	    * Relation from Resource/Agent to Event
+	    * @ejb.interface-method 
+	    * 	view-type="local"
+		* @ejb.facade-method 
+		*	invalidate="true"
+	    */
+	    #if($targetIsMany)
+public abstract void set${relationTarget}(java.util.Collection $relationTarget);
+		#else
+public abstract void set$relationTarget(${relationTarget}Local $relationTarget);		
+		#end
+		//Source=$relationSource SourceIsMany=$sourceIsMany 
+		//Target=$relationTarget TargetIsMany=$targetIsMany
+		//Bidir=$bidirectional Signature=$signature
+
+		/**
+		 * @ejb.interface-method
+    	 *    view-type="local"
+		 *
+		 * @ejb.facade-method     
+		 *
+   		 * @ejb.value-object
+     	 *   aggregate="${path}.${modelName}.${relationTarget}Value"
+     	 *   aggregate-name="${relationTarget}"
+     	 *   members="${path}.${modelName}.${relationTarget}Local"
+     	 *   members-name="${relationTarget}"
+     	 *   relation="external"
+		#if($targetIsMany)
+     	 *   type="Collection"
+		#end  
+     	 *
+   	 	 * @ejb.relation
+   		 *   name="${signature}" 
+   		 *   role-name="${relationSource}-${relationTarget}"
+   		#if(!$bidirectional)
+   		 *	 target-ejb="${relationTarget}"
+    	 *   target-role-name="${relationTarget}-belongs-to-${relationSource}"
+    	 #if($targetIsMany) 
+      	 *   target-multiple="yes"  	 
+    	 #else    
+    	 *   target-multiple="no"
+    	 #end
+   		#end
+   		 #if(!$bidirectional)
+         * @jboss.target-relation
+     	 *   fk-column="${relationTarget}_fk"
+         * 	 related-pk-field="$stringhelper.getSmallFirstLetter(${relationTarget})UId"
+    	 #if($targetIsMany) 
+      	 *   target-multiple="yes"  	 
+    	 #else    
+    	 *   target-multiple="no"
+    	 #end
+    	 #else
+    	 * @jboss.relation
+     	 *   fk-column="${relationTarget}_fk"
+         * 	 related-pk-field="$stringhelper.getSmallFirstLetter(${relationTarget})UId"
+   		#end
+   		## * @jboss.relation-table
+		## * table-name="${signature}"
+   		 *
+   		## * @jboss.relation-mapping style="relation-table"
+   		## * @jboss.relation
+     	## *   fk-column="${relationTarget}_fkey"
+        ## * 	 related-pk-field="$stringhelper.getSmallFirstLetter(${relationTarget})UId"
+   		 */	
+   		 #if($targetIsMany)
+public abstract java.util.Collection get${relationTarget}();
+		#else
+public abstract ${relationTarget}Local get$relationTarget();
+		#end		
+#end
+#end
+
+
+#macro( makeKeyField $className)
+
+/****************************************************
+			K E Y  F I E L D 
+*****************************************************/
+#set($small = $stringhelper.getSmallFirstLetter($className))
+
+    /**
+     * @ejb.pk-field
+     * @ejb.persistence
+     *      column-name="${small}UId"
+     * @ejb.value-object
+     * @ejb.interface-method
+     * @ejb.persistent-field
+     * @ejb.transaction
+     *      type="Supports"
+     */
+    public abstract Integer get${className}UId();
+	/**
+     * @ejb.interface-method
+     */
+    public abstract void set${className}UId( Integer orderItemUId );
+/****************************************************
+			E N D  K E Y  F I E L D 
+*****************************************************/    
+#end
+

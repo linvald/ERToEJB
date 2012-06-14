@@ -1,0 +1,81 @@
+
+$writer.changeOutput("CounterEJB.java")
+
+#set( $path = $ejbmodel.get_basePackagePath())
+#set( $modelName = $ejbmodel.get_modelName())
+
+package ${path}.${modelName};
+
+import javax.ejb.CreateException;
+import javax.ejb.EntityBean;
+
+/**
+ * @ejb.bean
+ *      name="Counter"
+ *      type="CMP"
+ *    cmp-version="2.x"
+ *      view-type="local"
+ *      primkey-field="name"
+ *      schema="Counter"
+ * @ejb.transaction
+ *      type="Required"
+ * @ejb.persistence
+ *      table-name="T_COUNTER"
+ *
+ * @jboss.persistence
+ *      create-table="true"
+ *      remove-table="false"
+ */
+public abstract class CounterEJB implements EntityBean{
+
+
+    /**
+     * @ejb.interface-method
+     */
+    public int nextValue(){
+        int value = getValue(  ) + 1;
+        setValue( value );
+
+        return value;
+    }
+
+    /**
+     * @ejb.pk-field
+     * @ejb.persistence
+     *      column-name="cnt_name"
+     *      jdbc-type="VARCHAR"
+     *      sql-type="varchar(50)"
+     * @ejb.interface-method
+     * @ejb.transaction
+     *      type="NotSupported"
+     */
+    public abstract String getName();
+
+    public abstract void setName( String name );
+
+    /**
+     * @ejb.persistence
+     *      column-name="cnt_value"
+     */
+    public abstract int getValue(  );
+
+    public abstract void setValue( int value );
+
+    /**
+     * @ejb.create-method
+     */
+    public String ejbCreate( String name ) throws CreateException{
+    	System.out.println("In ejbCreate() for Counter - resetting counter for " + name);
+    	System.out.println("getValue() returns " + getValue());
+        setName( name );
+        if(getValue()==0)
+        	setValue( 0 );
+        else
+        	setValue(nextValue());	
+
+        return null;
+    }
+
+    public void ejbPostCreate( String name )
+        throws CreateException {}
+}

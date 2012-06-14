@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<reamodel name="silkshop">
+
+   <resource name="Silk" id="color, quality" kind="measuarble" unit="meters"/>
+   <resource name="CashAtHand" kind="cash" unit="kr"/>
+   <agent name="Manager"/>
+   <agent name="Investor"/>
+   <agent name="SilkVendor" />
+   <agent name="Customer"/>
+
+   <event name="PurchaseSilk">
+      <inflow resource="Silk"/>
+      <internal agent="Manager"/>
+      <external agent="SilkVendor"/>
+      <dual event="PaySilk" />
+   </event>
+
+   <event name="PaySilk">
+      <outflow resource="CashAtHand"/>
+      <internal agent="Manager"/>
+      <external agent="SilkVendor" />
+      <dual event="PurchaseSilk"/>
+   </event>
+
+   <event name="SellSilk">
+      <outflow resource="Silk"/>
+      <internal agent="Manager"/>
+      <external agent="Customer"/>
+      <dual event="GetPayment"/>
+   </event>
+
+   <event name="GetPayment">
+      <inflow resource="CashAtHand"/>
+      <internal agent="Manager"/>
+      <external agent="Customer"/>
+      <dual event="SellSilk"/>
+   </event>
+
+
+</reamodel>

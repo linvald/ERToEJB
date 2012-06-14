@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xsd:schema targetNamespace="REAML1.1.xsd" xmlns="REAML1.1.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xsd:element name="reaspec">
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element name="comment" type="xsd:string"/>
+				<xsd:element name="resource" type="resourceType"/>
+				<xsd:element name="event" type="eventType"/>
+				<xsd:element name="agent" type="agentType"/>
+				<xsd:element name="transfer" type="exchangeType"/>
+				<xsd:element name="transformation" type="exchangeType"/>
+				<xsd:element name="typeimage" type="typeImageType"/>
+			</xsd:choice>
+			<xsd:attribute name="project" type="xsd:string"/>
+		</xsd:complexType>
+		<xsd:unique name="UniqueNames">
+			<xsd:selector xpath=".//*"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:key name="ResourceNames">
+			<xsd:selector xpath=".//resource"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:key name="AgentNames">
+			<xsd:selector xpath=".//agent"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:key name="EventNames">
+			<xsd:selector xpath=".//event"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:key name="ExchangeNames">
+			<xsd:selector xpath=".//transfer|.//transformation"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:key name="OperationalLevelNames">
+			<xsd:selector xpath=".//resource|.//event|.//agent|.//transfer|.//transformation"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:keyref name="CheckEventResource" refer="ResourceNames">
+			<xsd:selector xpath="./event/inflow|./event/outflow"/>
+			<xsd:field xpath="@resource"/>
+		</xsd:keyref>
+		<xsd:keyref name="CheckExchangeEvent" refer="EventNames">
+			<xsd:selector xpath="./transfer/inflow|./transfer/outflow|./transformation/inflow|./transformation/outflow"/>
+			<xsd:field xpath="@event"/>
+		</xsd:keyref>
+		<xsd:keyref name="CheckExchangeProvider" refer="AgentNames">
+			<xsd:selector xpath="./transfer/inflow|./transfer/outflow|./transformation/inflow|./transformation/outflow"/>
+			<xsd:field xpath="@provider"/>
+		</xsd:keyref>
+		<xsd:keyref name="CheckExchangeReceiver" refer="AgentNames">
+			<xsd:selector xpath="./transfer/inflow|./transfer/outflow|./transformation/inflow|./transformation/outflow"/>
+			<xsd:field xpath="@receiver"/>
+		</xsd:keyref>
+		<xsd:key name="ResourcesInCustody">
+			<xsd:selector xpath=".//agent/custody"/>
+			<xsd:field xpath="@resource"/>
+		</xsd:key>
+		<xsd:keyref name="CheckResourceInCustody" refer="ResourcesInCustody">
+			<xsd:selector xpath="./resource"/>
+			<xsd:field xpath="@name"/>
+		</xsd:keyref>
+		<xsd:keyref name="CheckTypeImage" refer="OperationalLevelNames">
+			<xsd:selector xpath="./typeimage"/>
+			<xsd:field xpath="@for"/>
+		</xsd:keyref>
+
+	</xsd:element>
+	<xsd:complexType name="EntityType">
+		<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="attribute">
+				<xsd:complexType name="">
+					<xsd:attribute name="name" type="xsd:Name"/>
+					<xsd:attribute name="type" type="xsd:QName"/>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="name" type="xsd:string" use="required"/>
+	</xsd:complexType>
+	<xsd:complexType name="resourceType">
+		<xsd:complexContent>
+			<xsd:extension base="EntityType">
+				<xsd:attribute name="kind">
+					<xsd:simpleType>
+						<xsd:restriction base="xsd:string">
+							<xsd:pattern value="(measuable|countable|unique|cash)"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:attribute>
+				<xsd:attribute name="unit" type="xsd:string">
+				</xsd:attribute>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="agentType">
+		<xsd:complexContent>
+			<xsd:extension base="EntityType">
+				<xsd:sequence minOccurs="0" maxOccurs="unbounded">
+					<xsd:element name="custody">
+						<xsd:complexType name="">
+							<xsd:attribute name="resource" type="xsd:string"/>
+						</xsd:complexType>
+						<xsd:keyref name="CustodyRelation" refer="ResourceNames">
+							<xsd:selector xpath="."/>
+							<xsd:field xpath="@resource"/>
+						</xsd:keyref>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="eventType" abstract="true">
+		<xsd:complexContent>
+			<xsd:extension base="EntityType">
+				<xsd:choice>
+					<xsd:element name="outflow">
+						<xsd:complexType>
+							<xsd:attribute name="resource" type="xsd:string" use="required"/>
+							<xsd:attribute name="kind" type="outflowType" use="optional"/>
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="inflow">
+						<xsd:complexType>
+							<xsd:attribute name="resource" type="xsd:string" use="required"/>
+							<xsd:attribute name="kind" type="inflowType" use="optional"/>
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="exchangeType">
+		<xsd:complexContent>
+			<xsd:extension base="EntityType">
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="inflow" type="eventSpecType"/>
+					<xsd:element name="outflow" type="eventSpecType"/>
+				</xsd:choice>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:complexType name="typeImageType">
+		<xsd:sequence minOccurs="1" maxOccurs="unbounded">
+			<xsd:element name="attribute">
+				<xsd:complexType name="">
+					<xsd:attribute name="name" type="xsd:Name"/>
+					<xsd:attribute name="type" type="xsd:QName"/>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="name" type="xsd:string" use="required"/>
+		<xsd:attribute name="for" type="xsd:string" use="required"/>
+		<xsd:attribute name="kind" default="characterization">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:pattern value="policy|prototype|characterization"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+	</xsd:complexType>
+	<!-- The following types are helper types  -->
+	<xsd:simpleType name="inflowType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(take|produce)"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="outflowType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="(give|use|consume)"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="eventSpecType">
+		<xsd:attribute name="event" type="xsd:string"/>
+		<xsd:attribute name="provider" type="xsd:string"/>
+		<xsd:attribute name="receiver" type="xsd:string"/>
+	</xsd:complexType>
+</xsd:schema>

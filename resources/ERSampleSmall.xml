@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ermodel name="SilkVendor">
+
+<keystrategy strategy="autoincrement" generate="true"/>
+
+<entity name="Silk"/> 
+<entity name="SellSilk"/>
+
+
+<relation name="outflow" direction="bidirectional">
+	<source name="SellSilk" cardinality="many"/>
+	<target name="Silk" cardinality="many"/>
+</relation>
+
+
+</ermodel>

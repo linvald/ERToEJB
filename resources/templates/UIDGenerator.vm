@@ -1,0 +1,63 @@
+
+$writer.changeOutput("UIDGeneratorEJB.java")
+
+#set( $path = $ejbmodel.get_basePackagePath())
+#set( $modelName = $ejbmodel.get_modelName())
+
+package ${path}.${modelName};
+
+import java.rmi.RemoteException;
+import javax.ejb.EJBException;
+import javax.ejb.FinderException;
+import javax.ejb.SessionBean;
+import ${path}.${modelName}.CounterLocal;
+import ${path}.${modelName}.CounterLocalHome;
+import ${path}.${modelName}.CounterUtil;
+
+/**
+ *
+ * @ejb.bean
+ *      name="UIDGenerator"
+ *      type="Stateless"
+ *      view-type="local"
+ *    cmp-version="2.x"
+ * @ejb.transaction
+ *      type="Required"
+ * @ejb.ejb-ref
+ *      ejb-name="Counter"
+ *      view-type="local"
+ * 		ref-name="ejb/CounterLocal"
+ */
+public abstract class UIDGeneratorEJB implements SessionBean{
+
+    public static final String EJB_COUNTER = "java:comp/env/ejb/CounterLocal";
+
+    /**
+     * @ejb.interface-method
+     */
+    public int getUniqueId( String idPrefix ){
+        return getCounter( idPrefix ).nextValue();
+    }
+
+    private CounterLocal getCounter( String name ){
+        try{
+			CounterLocalHome home = null;
+            CounterLocal counter = null;
+            try{
+            	home = CounterUtil.getLocalHome();
+                counter = home.findByPrimaryKey( name );
+            }
+            catch ( FinderException fe ){
+                counter = home.create( name );
+            }
+            catch( Exception e ){
+            	throw new EJBException( e );
+            }
+
+            return counter;
+        }
+        catch ( Exception ce ){
+            throw new EJBException( "Could not create counter " + name + ". Error: " + ce.getMessage() );
+        }
+    }
+}

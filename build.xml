@@ -1,0 +1,262 @@
+
+
+<project basedir="." default="jar" name="ERToEJB">
+
+<description>
+This build file works on source pertaining to the REA project!
+</description>
+
+	<!-- set global properties for this build -->
+	<property name="src" value="."/>
+	<property name="dist" value="dist"/>
+	<property name="test.dir" value="test"/>
+	<property name="build" value="build"/>
+	<property name="tmp" value="tmp"/>
+	<property name="root" value="."/>
+	<property name="app.name" value="ERToEJB"/>
+	<property file="resources/ant.properties"/>
+	<property name="dk" value="dk"/>
+	<property name="main" value="dk.itu.next.rea.transform.ermodel.ERtoEJBMapper"/>
+	<property name="application.main" value="dk.itu.next.rea.Main"/>
+	<!--<property name="jboss.home" value="${env.JBOSS_HOME}" /> -->
+	
+	 
+	<!-- The title of this component -->
+	<property name="component.title" value="Reap"/>
+	<!-- The main attribute of the manifest file-->
+	<property name="main.name" value="Main"/>
+	  
+	
+	<!-- Compiler settings -->  
+	<property name="compile.debug" value="true"/> 
+	<property name="compile.deprecation" value="true"/> 
+	<property name="compile.optimize" value="false"/> 
+	
+	
+	<property name="facade" value="FacadeBean.java"/> 
+	
+	
+	<path id="classpath">
+	 		<fileset dir="./lib">
+	  			<include name="**/*.jar" /> 
+	  		</fileset>
+	  		<!--<fileset dir="${jboss.home}/client">
+	  			<include name="*.jar"/>
+	  		</fileset>
+	  		 <fileset dir="${jboss.home}/server/default/lib">
+	  			<include name="*.jar"/>
+	  		</fileset>-->
+	  		<pathelement path="dk/"/>
+	</path>
+	  	
+	<path id="xdoclet.classpath">
+		<fileset dir="./lib/xdoclet">
+	    	<include name="*.jar"/>
+		</fileset>
+	</path>
+	
+  <!-- Define subtasks -->
+  <taskdef name="xdoclet" classname="xdoclet.DocletTask" classpathref="classpath">
+  	<classpath refid="classpath"/>
+  </taskdef> 
+  
+  <taskdef name="ejbdoclet" classname="xdoclet.modules.ejb.EjbDocletTask" classpathref="classpath" >
+ 		<classpath refid="classpath"/>
+  </taskdef> 
+  
+  <!-- Allow us to run our own XDoclet templates -->
+  <taskdef name="templatedoclet" classname="xdoclet.DocletTask" classpathref="classpath">
+	  <classpath refid="classpath"/>
+  </taskdef> 
+
+
+<!-- ========= I N I T ========================--> 	 
+<target description="Initialazation: path, timestamp" name="init">
+  	<echo message="::::::::::::::::::::Running init::::::::::::::::::::"/>
+
+
+	<property name="${app.name}" value="${app.name}-${DSTAMP}.jar"/>
+	
+ <uptodate property="compile.unnecessary">
+   <srcfiles dir="dk" includes="**/*.java"/>
+     <mapper type="glob" from="*.java" to="${build.dir}/**/*.class" />
+ </uptodate>
+	
+	<mkdir dir="output"/>	
+	<echo message="______Finished setting up environment...init end_______"/>
+</target>
+
+ 
+<!-- ========= C O M P I L E ========================-->  
+<target name="compile" depends="init" description="Compiling the sourcefiles into build" unless="compile.unnecessary" >
+	<echo message=":::::::::::::::::::Compiling sourcefiles:::::::::::::::::::::::"/>
+
+	<javac 
+		srcdir="."
+		destdir="dk" 
+		classpathref="classpath"
+		deprecation="${compile.deprecation}" 
+		debug="${compile.debug}"
+		optimize="${compile.optimize}"
+		excludes="ejb/**/**,**/*Test*,GeneratedBeanFiles/**, GeneratedClasses.java,*Test.java, dk/itu/next/rea/test/NaiveUseTest.java,dk/itu/next/rea/transform/velocity/model/**">	
+		<src path="."/>
+	</javac>
+	<echo message="___________Compiled sourcefiles...compile end_____________"/>
+</target>
+
+
+
+
+<!-- ========= C O M P I L E  G E N E R A T E D ========================-->    
+<target name="compilegenerated" depends="xdoclet" description="compiles the generated code">
+  <echo message=":::::::::::::::::::Compiling generated files::::::::::::::::::::::"/>
+     
+   
+    <javac 
+		srcdir="${output.dir}"
+		classpathref="classpath"
+		deprecation="${compile.deprecation}" 
+		debug="${compile.debug}"
+		optimize="${compile.optimize}"
+		>	
+
+	</javac>
+	<echo message="___________Compiled generated sourcefiles...compile end_____________"/>
+</target>
+
+<!-- ========= J A R ========================--> 
+<target name="jar" description="Making the jar-file from the build-catalog" depends="compilegenerated">
+	<echo message=". :::::::::::::::::::::Making jarfile::::::::::::::::::::::::"/>
+	
+	<jar basedir="${output.dir}" 
+		jarfile="${output.dir}/${app.name}.jar" 
+		excludes="**/*Test*.class,**/*.txt,**/*.java,**/Test.class, dist, testreports, templates, lib, CVS,build, *.xml">
+   		<manifest>
+    		<attribute name="Main-Class" value="${application.main}"/>
+  		</manifest>
+	</jar>
+	<echo message="Made jar ${output.dir}/${app.name}.jar...end dist"/>
+</target>
+
+
+<target name="runmain" depends="compile">
+		<fileset dir="dk"><include name="*.class"/></fileset>
+	<java classname="${main}" failonerror="no">
+		<classpath refid="classpath" /> 
+		<arg value="${erspec}"/>
+	</java>
+</target>
+<!-- ========= X D O C L E T  ========================--> 
+<target name="xdoclet" depends="init">
+	
+
+	<echo message=":::::::::::::::::::::Running XDoclet::::::::::::::::::::::::"/>
+    <echo message="${output.dir}"/>
+	<ejbdoclet
+  		destDir="${output.dir}/"
+  		excludedtags="@version, @author"
+		ejbspec="2.0"
+		verbose="true"
+		force="true">
+
+  	<fileset dir="${output.dir}"></fileset>
+
+	<localinterface/> 
+  	<localhomeinterface/> 
+  	<!-- exclude facades-->
+  	<homeinterface/>
+	<remoteinterface/>
+  	<!--<remotefacade acceptInterfaces="false" acceptAbstractClasses="false"  />-->
+  	<session />
+  	<utilobject includeGUID="true"/>
+  	<entitycmp/> 
+  	<valueobject/>
+ 	<!--<dataobject />-->
+	<deploymentdescriptor destdir="${output.dir}/META-INF"
+  						acceptInterfaces="true"/> 
+   	<jboss 
+   			version="3.0" 
+   			datasource="java:/DefaultDS"
+   			datasourceMapping="Hypersonic SQL" 
+   			unauthenticatedPrincipal="nobody" 
+   			xmlencoding="UTF-8" 
+   			destdir="${output.dir}/META-INF" 
+   			validatexml="true"
+   			generateRelations="true" 
+   			preferredrelationmapping="relation-table" /> 			
+   			 
+	</ejbdoclet>
+
+	<antcall target="modifyjboss"/>
+	<echo message="________Succesfully ran XDoclet_________"/>
+</target>
+
+
+<!-- ========= M O D I F Y  D E S C R I P T O R  ========================--> 
+<target name="modifyjboss" description="update the dtd reference witch is otherwise nullpointing">
+	<echo message=". :::::::::::::::::::::Modifying descriptors::::::::::::::::::::::::"/>
+	<!-- adjust the jbosscmp-jdbc.xml deployment descriptor DOCTYPE -->
+	<replace file="${output.dir}/META-INF/jbosscmp-jdbc.xml">
+		<replacetoken><![CDATA[<!DOCTYPE jbosscmp-jdbc PUBLIC "-//JBoss//DTD JBOSSCMP-JDBC 3.0//EN" "http://www.jboss.org/j2ee/dtd/jbosscmp-jdbc_3_0.dtd">]]></replacetoken>
+		<replacevalue><![CDATA[<!DOCTYPE jbosscmp-jdbc PUBLIC "-//JBoss//DTD JBOSSCMP-JDBC 3.2//EN" "http://www.jboss.org/j2ee/dtd/jbosscmp-jdbc_3_2.dtd">]]></replacevalue>
+	</replace>
+	<!-- adjust the jboss.xml deployment descriptor DOCTYPE -->
+	<replace file="${output.dir}/META-INF/jboss.xml">
+		<replacetoken><![CDATA[<!DOCTYPE jboss PUBLIC "-//JBoss//DTD JBOSS 3.1//EN" "http://www.jboss.org/j2ee/dtd/jboss_3_1.dtd">]]></replacetoken>
+		<replacevalue><![CDATA[<!DOCTYPE jboss PUBLIC "-//JBoss//DTD JBOSS 3.2//EN" "http://www.jboss.org/j2ee/dtd/jboss_3_2.dtd">]]></replacevalue>
+	</replace>
+</target>
+
+<!-- ========= X D O C L E T  T E M P L A T E S  ========================--> 
+<target name="templatedoclet" >
+	<echo message=". :::::::::::::::::::::Running own templates::::::::::::::::::::::::"/>
+	<templatedoclet destdir="test">
+			<fileset dir="./ejb"></fileset>
+		<template
+			templateFile="templates/xdt/types.xdt"
+			destinationfile="test.txt"/>
+	</templatedoclet>
+</target>
+
+
+<!-- ========= D E P L O Y ========================-->  
+<target name="deploy" depends="jar" description="deploys files to jboss remotely">
+	<echo message=":::::::::::deploying to server: ${jboss.home} :::::::::::"/>	
+	<!-- Check if jms topic exists on server - otherwise deploy it -->
+	<!--<copy file="./resources/jbossmq-updatetopic-service.xml" todir="${jboss.home}/server/default/deploy" overwrite="false" verbose="true"/> 	-->
+ 	<copy file="${app.name}.jar" todir="${jboss.home}/server/default/deploy" verbose="true"/> 
+ 	<echo message="_______Succesfully deployed ${app.name}.jar_______"/>
+</target>
+ 
+<!-- ========= U N D E P L O Y ========================-->  
+<target name="undeploy" description="undeploys files to jboss remotely">
+	<echo message=":::::::::::undeploying ${app.name}.jar from ${jboss.home} :::::::::::"/>
+ 	<delete file="${jboss.home}/server/default/deploy/${app.name}.jar"/> 
+ 	<echo message="_______Succesfully undeployed ${app.name}.jar_______"/>
+</target> 
+ 
+ 
+<!-- ========= C L E A N  D A T A B A S E ========================-->   
+<target name="cleandb">
+	<echo message=":::::::::::cleaning hypersonic db (jboss cant be running):::::::::::"/>
+	<delete dir="${jboss.home}/server/default/data/hypersonic"/>	
+	<echo message="Cleaned up db...end clean"/>
+</target> 
+ 
+<!-- ========= C L E A N ========================-->   
+  	<target name="clean">
+	<delete dir="${build}"/>
+	<!--<delete dir="${dist}"/>-->
+	<delete dir="${test.reports.dir}"/>
+	<delete dir="generated.dir"/>
+	<delete file="GeneratedClasses.java"/>
+	<delete dir="${generated.dir}"/>
+	<delete dir="${tmp}"/>
+	<delete dir="ReaClassDefinitions"/>
+	<delete file="FacadeBean.java"/>
+	<delete dir="ejb"/>
+	<delete  dir="output"/>
+	<echo message="Cleaned directories etc...end clean"/>
+</target>
+	
+</project>

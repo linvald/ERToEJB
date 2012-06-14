@@ -1,0 +1,1 @@
+java -classpath lib\util.jar;lib\commons-collections.jar;lib\logkit-1.1.jar;lib\velocity-1.3.1-rc2.jar;.;dk dk.itu.next.rea.gui.ERToEJB 

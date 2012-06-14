@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ermodel name="RelationTest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="ERSchema.xsd">
+	<keystrategy strategy="autoincrement" generate="true"/>
+	<entity name="Left">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Right">
+		<attribute name="myInt" value="java.lang.Integer"/>
+		<attribute name="myFriends" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="One">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Two">
+		<attribute name="myInt" value="java.lang.Integer"/>
+		<attribute name="myFriends" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Ying">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Yang">
+		<attribute name="myInt" value="java.lang.Integer"/>
+		<attribute name="myFriends" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Sort">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Hvid">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="God">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Ond">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Java">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<entity name="Csharp">
+		<attribute name="myString" value="java.lang.String"/>
+		<attribute name="myThings" value="java.util.ArrayList"/>
+	</entity>
+	<relation name="left_has_right_one_2_one_uni" direction="unidirectional">
+		<source name="Left" cardinality="one"/>
+		<target name="Right" cardinality="one"/>
+	</relation>
+	<relation name="one_has_many_twos_uni" direction="unidirectional">
+		<source name="One" cardinality="one"/>
+		<target name="Two" cardinality="many"/>
+	</relation>
+	<relation name="many_yings_has_yangs" direction="unidirectional">
+		<source name="Ying" cardinality="many"/>
+		<target name="Yang" cardinality="many"/>
+	</relation>
+	<relation name="sort_has_hvid_bi_one_one" direction="bidirectional">
+		<source name="Sort" cardinality="one"/>
+		<target name="Hvid" cardinality="one"/>
+	</relation>
+	<relation name="god_has_ond_bi_one_many" direction="bidirectional">
+		<source name="God" cardinality="one"/>
+		<target name="Ond" cardinality="many"/>
+	</relation>
+	<relation name="javas_has_csharps_bi_many_many" direction="bidirectional">
+		<source name="Java" cardinality="many"/>
+		<target name="Csharp" cardinality="many"/>
+	</relation>
+</ermodel>

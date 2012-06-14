@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ermodel name="SilkVendor">
+
+<keystrategy strategy="autoincrement" generate="true"/>
+
+<entity name="Silk"/> 
+<entity name="CashAtHand"/> 
+<entity name="SilkVendor"/>
+<entity name="Customer"/>
+<entity name="CashReceive"/>
+<entity name="SellSilk"/>
+<entity name="CashDispersement"/>
+<entity name="ObtainSilk"/>
+<entity name="SilkOrderTransfer"/>
+<entity name="CustomerOrderTransfer"/>
+<entity name="Investor">
+	<attribute name="Address" value="string"/>
+	<attribute name="Phone" value="string"/>
+</entity>
+
+
+<relation name="outflow" direction="bidirectional">
+	<source name="SellSilk" cardinality="many"/>
+	<target name="Silk" cardinality="one"/>
+</relation>
+
+<relation name="inflow" direction="bidirectional">
+	<source name="CashReceive" cardinality="many"/>
+	<target name="CashAtHand" cardinality="one"/>
+</relation>
+
+<relation name="outflow" direction="bidirectional">
+	<source name="CashDispersement" cardinality="many"/>
+	<target name="CashAtHand" cardinality="one"/>
+</relation>
+
+<relation name="inflow" direction="bidirectional">
+	<source name="ObtainSilk" cardinality="many"/>
+	<target name="Silk" cardinality="one"/>
+</relation>
+
+
+<!--
+<relation name="provider" direction="bidirectional">
+	<source name="ObtainSilk" cardinality=""/>
+	<target name="" cardinality="SilkVendor"/>
+</relation>
+
+<relation name="reciever" direction="bidirectional">
+	<source name="ObtainSilk" cardinality="one"/>
+	<target name="Manager" cardinality=""/>
+</relation>
+-->
+
+
+<!-- Transfer relations 
+<relation name="outflowevent" direction="bidirectional">
+	<source name="SilkOrderTransfer" cardinality="one"/>
+	<target name="CashDispersement" cardinality="many"/>
+</relation>
+
+<relation name="inflowevent" direction="bidirectional">
+	<source name="SilkOrderTransfer" cardinality="one"/>
+	<target name="ObtainSilk" cardinality="many"/>
+</relation>
+
+<relation name="inflowprovider" direction="bidirectional">
+	<source name="SilkOrderTransfer" cardinality="one"/>
+	<target name="SilkVendor" cardinality="many"/>
+</relation>
+
+<relation name="inflowreceiver" direction="bidirectional">
+	<source name="SilkOrderTransfer" cardinality="one"/>
+	<target name="Manager" cardinality="many"/>
+</relation>
+
+<relation name="outflowprovider" direction="bidirectional">
+	<source name="SilkOrderTransfer" cardinality="one"/>
+	<target name="Manager" cardinality="many"/>
+</relation>
+
+<relation name="outflowreceiver" direction="bidirectional">
+	<source name="SilkOrderTransfer" cardinality="one"/>
+	<target name="Customer" cardinality="many"/>
+</relation>-->
+
+</ermodel>
